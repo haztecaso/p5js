@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Waves</title>
+    <script src="libraries/p5.js" type="text/javascript"></script>
+
+    <script src="libraries/p5.dom.js" type="text/javascript"></script>
+    <!--<script src="libraries/p5.sound.js" type="text/javascript"></script>-->
+    <script src="ob.js" type="text/javascript"></script>
+    <script src="sketch.js" type="text/javascript"></script>
+    <script src="https://use.fontawesome.com/b9c7a31175.js"></script>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        canvas {
+            vertical-align: top;
+        }
+
+        #config_file {
+            display: none;
+        }
+
+        .label {
+            position: absolute;
+            display: block;
+            left: 10px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .icon {
+            position: absolute;
+            color: white;
+            cursor: pointer;
+        }
+
+        .row1 {
+            top: 10px;
+        }
+
+        .row2 {
+            top: 40px;
+        }
+
+        #download {
+            left: 40px;
+        }
+
+        #refresh {
+            left: 70px;
+        }
+
+        #toggle {
+            left: 100px;
+        }
+
+        #zoom_in {
+            left: 10px;
+        }
+
+        #zoom_out {
+            left: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="form">
+        <label for="config_file" class="label row1"><i class="fa fa-cogs" aria-hidden="true"></i></label>
+        <input id="config_file" name="files[]" multiple="" type="file" />
+    </form>
+    <a id="download" class="icon row1" src="" download><i class="fa fa-download" aria-hidden="true"></i></a>
+    <a id="refresh" class="icon row1" src="" onclick="refresh()"><i class="fa fa-refresh" aria-hidden="true"></i></a>
+    <a id="toggle" class="icon row1" src="" onclick="box.toggle()"><i class="fa fa-window-maximize" aria-hidden="true"></i></a>
+
+    <a id="zoom_in" class="icon row2" src="" onclick="zoom_button(0.2)"><i class="fa fa-search-plus" aria-hidden="true"></i></a>
+    <a id="zoom_out" class="icon row2" src="" onclick="zoom_button(-0.2)"><i class="fa fa-search-minus" aria-hidden="true"></i></a>
+</body>
+
+</html>
