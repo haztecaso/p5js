@@ -1,52 +1,57 @@
-function Field(def, mag) {
+function Field(def) {
     this.vectors = [];
     this.def = def;
-    this.mag = mag;
     this.defx = width / floor(width / this.def);
     this.defy = height / floor(height / this.def);
-    this.calc = function(points) {
+    this.calc = function() {
         this.vectors = [];
-        for (var x = -width / 2; x < width / 2; x += this.def) {
-            for (var y = -height / 2; y < height / 2; y += this.def) {
-                var v = createVector(0,0);
-                for (var i = 0; i < points.length; i++) {
-                    var v_i = createVector(points[i].x - x, points[i].y - y);
-                    var d = dist(x, y, points[i].x, points[i].y) / 1000;
-                    v_i.setMag(1 / pow(d,2));
-                    v_i.setMag(constrain(v_i.mag(), 0, d*1000));
-                    v.add(v_i);
-                }
-
+        for (var x = 0; x < width / 2; x += this.def) {
+            for (var y = 0; y < height / 2; y += this.def) {
+                var v = field(x,y);
                 this.vectors.push([v, createVector(x, y)]);
+                var v = field(-x,y);
+                this.vectors.push([v, createVector(-x, y)]);
+                var v = field(x,-y);
+                this.vectors.push([v, createVector(x, -y)]);
+                var v = field(-x,-y);
+                this.vectors.push([v, createVector(-x, -y)]);
             }
         }
     }
-    this.display = function(v = true, p = false) {
+    this.display = function() {
         for (var i = 0; i < this.vectors.length; i++) {
             var x = this.vectors[i][1].x;
             var y = this.vectors[i][1].y;
             var vector = this.vectors[i][0];
-            if (v == true) {
-                arrow(vector, x, y);
-            }
-            if (p == true) {
-                stroke(255);
-                strokeWeight(2);
-                point(x, y);
-                strokeWeight(0);
-                fill(255);
-                text("(" + floor(x / this.defx) + "," + floor(y / this.defy) + ")", x + 5, y + 15);
-            }
+            vector.setMag(vector.mag()*20)
+            arrow(vector, x, y);
         }
     }
 }
 
-function arrow(vector, x, y) {
+function Particle(pos){
+  this.pos = pos;
+  this.oldPos = this.pos;
+  this.update = function(){
+    var f = field(this.pos.x,this.pos.y);
+    var vel = createVector(f.x,f.y);
+    this.oldPos = createVector(this.pos.x,this.pos.y);
+    this.pos.x += vel.x;
+    this.pos.y += vel.y;
+    //arrow(vel, this.pos.x, this.pos.y,color(0,255,0));
+  }
+  this.display = function(){
+    stroke(170,55,100);
+    strokeWeight(2);
+    line(this.pos.x,this.pos.y,this.oldPos.x,this.oldPos.y);
+  }
+}
+function arrow(vector, x, y, col = color(255)) {
     var m = vector.mag();
     var v = createVector(vector.x / m, vector.y / m);
-    stroke(255);
+    stroke(col);
     strokeWeight(1);
-    fill(255);
+    fill(col);
     line(x, y, x + m * v.x, y + m * v.y);
     noStroke();
     var f = createVector(1, -1 / (v.y / v.x));
