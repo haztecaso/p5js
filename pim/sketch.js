@@ -1,5 +1,6 @@
 var bubbles = [];
 var x, y, a, t;
+var time=0;
 var tools;
 var slider;
 var text1 = "Press s to activate tools";
@@ -9,8 +10,6 @@ function setup() {
   x = width / 2;
   y = height / 2;
   background(0);
-  noCursor();
-
   slider = createSlider(100, 300, 200);
   slider.position(10, 10);
   slider.style('width', '100px');
@@ -20,12 +19,11 @@ function setup() {
 
 function draw() {
   background(0);
-  x = mouseX + touchX;
-  y = mouseY + touchY;
-  if (x === 0 && y === 0) {
-    x = width / 2;
-    y = height / 2;
-  }
+  time+=0.01;
+  let angle = TWO_PI*noise(time);
+
+  x = width/2 + 200*cos(angle);
+  y = height/2 + 200*sin(2*angle);
 
   for (var i = 0; i < bubbles.length; i++) {
     bubbles[i].move();
@@ -49,7 +47,6 @@ function draw() {
     text(bubbles.length, 5, height - 10);
     slider.show();
    
-
     rect(0, 0, 125, 40);
     cursor();
   } else {

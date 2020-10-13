@@ -1,18 +1,18 @@
 var grid;
 var t=0;
 function setup() {
-    createCanvas(windowWidth, windowHeight);
-	background(0,0,100);
+  createCanvas(windowWidth, windowHeight);
+	background(255,255,255);
 	grid=new Lines(500);
 	grid.born();
-	strokeWeight(1);
-	stroke(240);
+	strokeWeight(0.5);
+	stroke(255,255,225);
 	frameRate(1000);
 }
 
 function draw() {
-	background(0,0,50);
-	t+=0.05;
+  background(255,55,255);
+	t+=0.1;
 	grid.display();
 	grid.display(t,1);
 }
