@@ -2,7 +2,7 @@ var f;
 var a=0;
 var p = [];
 var n = 500;
-const scale = 0.025;
+const scale = 0.7;
 function setup() {
     createCanvas(windowWidth, windowHeight);
     background(0);
@@ -63,9 +63,9 @@ function drawField(){
 function field(a,b){
   x = a*scale;
   y = b*scale;
-  var d = Math.sqrt(x*x+y*y);
-  var o = 0.5;
-  var v = createVector(y/10+sin(y)+cos(x), -x/10+sin(x)-cos(y));
+  // var d = Math.sqrt(x*x/4+y*y);
+  var o = 0.4;
+  var v = createVector(y/10+sin(x), -tan(y*x)/10);
   v.setMag(o*v.mag());
   return v;
 }

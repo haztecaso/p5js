@@ -1,11 +1,11 @@
 var a = [];
 var b = [];
 
-var n_a = 2;
-var n_b = 2;
+var n_a = 3;
+var n_b = 3;
 
 var freqs = [200, 100, 50, 300, 400];
-var zoom = 2;
+var zoom = 7;
 var box;
 var downloaded = false;
 var id =[0,0];
@@ -21,17 +21,25 @@ function setup() {
 }
 
 function draw() {
-    var t = frameCount / 50;
-    background(0);
-    box.display();
+    var t = frameCount / 2000;
+    // background(0,map(noise(t/2000),0,1,0*255*1/5,255*2/5));
+    background(0,0.001);
+    // box.display();
 
 
     translate(width / 2, height / 2);
     for (var i = frameCount; i <= frameCount + 1; i += 0.001) {
-        strokeWeight(1);
+        zoom = map(0, 10,-1, 1, 8.7+cos(t*10)*sin(t/2+3)*12);
         var x = wave_sum(frameCount + i, a);
         var y = wave_sum(frameCount + i, b);
-        stroke(100, 255, 100);
+
+        // strokeWeight(1*map(noise(t*100), -1,1, 5, 200));
+        // stroke(1, noise(sin(t)*10)*3, 10, 10);
+
+        strokeWeight(map(noise(100*t*map(noise(t*10)*5,0,1, 1,1.7)), 0,1, 1, 100));
+        // strokeWeight(1*map(-1,1,0,255,cos(t)));
+        
+        stroke(map(cos(t*7773+.43), -1, 1, 0.000001, 150), map(sin(t*300+.5), -1, 1, 0.00001, 155),map(sin(t*2000*sin(t*2+0.2)+.7), -1, 1, 100, 55));
         point(zoom * x, zoom * y);
     }
 }
