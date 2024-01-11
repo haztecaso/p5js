@@ -150,6 +150,22 @@ function draw() {
     drawPoints(points)
 }
 
+class Stick {
+    constructor(pos, angleDelta) {
+        this.pos = pos;
+        this.angleDelta = angleDelta;
+    }
+    draw() {
+        push()
+        translate(width / 2, height / 2);
+        scale(p.shape.scale)
+        translate(this.pos.x, this.pos.y);
+        rotate(atan2(this.pos.y, this.pos.x) + this.angleDelta);
+        line(-p.shape.length / 2 + p.shape.weight / 2, 0, p.shape.length / 2 - p.shape.weight / 2, 0);
+        pop()
+    }
+}
+
 function misaveJSON() {
     let result = {};
     for (const [name, gui] of Object.entries(guis)) {
@@ -203,7 +219,35 @@ function descargar() {
     time = Math.floor(time / 1000) - 1612303066;
     const el = document.querySelector(".p5Canvas > svg")
     console.log(el)
-    svgExport.downloadSvg(el, "eki" + time);
+    // svgExport.downloadSvg(el, "eki" + time);
+    save(`eki${time}.svg`);
+}
+
+function ring(diameter, number, iter) {
+    let sticks = [];
+    let i = 0;
+    let nMax;
+    switch (p.grid.nm[0]) {
+        case 'A':
+            nMax = p.grid.nI;
+            break;
+        case 'B':
+            nMax = number;
+            break;
+        case 'C':
+            nMax = (p.grid.nI + number) / 2;
+            break;
+    }
+    while (i < nMax) {
+        const angleIncrement = p.grid.angleIncrement + p.grid.angleIncrementB;
+        // const angle = iter * angleIncrement * PI / 180 + iter * i * TAU / number;
+        const angle = iter * angleIncrement * PI / 180 + i * TAU / number;
+        const pos = createVector(cos(angle), sin(angle))
+        pos.setMag(diameter)
+        sticks.push(new Stick(pos, iter * p.dir.angleDeltaI * PI / 180))
+        i++;
+    }
+    return sticks
 }
 
 function rings() {
@@ -236,51 +280,8 @@ function rings() {
 
         n = floor(n);
         sticks = sticks.concat(ring(d, n, i))
-        // let angleDelta = 0;
-        // angleDelta += i * p.dir.angleDeltap.grid.dSI * PI / 180;
-        // angleDelta += sqrt(i * p.dir.angleDeltaI) * p.dir.angleDeltaI;
-        // angleDelta += p.dir.angleDeltaNoiseL * map(noise(x * p.dir.angleDeltaNoiseS, y * p.dir.angleDeltaNoiseS, t), 0, 1, -1, 1);
     }
     return sticks;
-}
-
-function ring(diameter, number, iter) {
-    let sticks = [];
-    let i = 0;
-    let nMax;
-    switch (p.grid.nm[0]) {
-        case 'A':
-            nMax = p.grid.nI;
-            break;
-        case 'B':
-            nMax = number;
-            break;
-        case 'C':
-            nMax = (p.grid.nI + number) / 2;
-            break;
-    }
-    while (i < nMax) {
-        const angleIncrement = p.grid.angleIncrement + p.grid.angleIncrementB;
-        // const angle = iter * angleIncrement * PI / 180 + iter * i * TAU / number;
-        const angle = iter * angleIncrement * PI / 180 + i * TAU / number;
-        const pos = createVector(cos(angle), sin(angle))
-        pos.setMag(diameter)
-        sticks.push(new Stick(pos, iter * p.dir.angleDeltaI * PI / 180))
-        i++;
-    }
-    return sticks
-}
-
-function ring_bak(diameter, number, iter) {
-    let sticks = [];
-    for (let i = 0; i < number; i += 1) {
-        const angleIncrement = p.grid.angleIncrement + p.grid.angleIncrementB;
-        const angle = iter * angleIncrement * PI / 180 + i * TAU / number;
-        const pos = createVector(cos(angle), sin(angle))
-        pos.setMag(diameter)
-        sticks.push(new Stick(pos, iter * p.dir.angleDeltaI * PI / 180))
-    }
-    return sticks
 }
 
 function drawPoints(points) {
@@ -300,8 +301,14 @@ function keyPressed() {
             Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
             showButtons = !showButtons;
             buttons.forEach((button) => {
-                if (showButtons) { button.show() }
-                else { button.hide() }
+                if (showButtons) {
+                    button.show()
+                    loadSelect.show()
+                }
+                else {
+                    button.hide()
+                    loadSelect.hide()
+                }
             })
             draw();
             break;
