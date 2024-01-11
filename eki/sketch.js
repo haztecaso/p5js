@@ -4,10 +4,6 @@ let t = 0;
 let p = {
 
     shape: {
-        // tD: 0.001,
-        // tDMax: 0.1,
-        // tDStep: 0.001,
-
         weight: 6,
         weightMin: 1,
         weightMax: 20,
@@ -42,11 +38,7 @@ let p = {
         dS2Max: 10,
         dS2Step: .1,
 
-        dFormula: [
-            "A",
-            "B",
-            "C",
-        ],
+        dFormula: ["A", "B", "C"],
 
         n0: 15,
         n0Min: 3,
@@ -61,11 +53,7 @@ let p = {
         nSMax: 5,
         nSStep: .1,
 
-        nFormula: [
-            "A",
-            "B",
-            "C",
-        ],
+        nFormula: ["A", "B", "C"],
 
         nm: ["A: nI", "B: n", "C: (n + nI) / 2"],
 
@@ -94,10 +82,8 @@ let p = {
     },
 }
 
-let guis = {};
-let buttons = [];
-let loadSelect;
-let showButtons = true;
+let guis, els;
+let showdom = true;
 
 let points;
 
@@ -105,37 +91,12 @@ function setup() {
     createCanvas(windowWidth, windowHeight, SVG);
     // createCanvas(windowWidth, windowHeight);
     stroke(255);
-    // strokeCap(ROUND);
 
-    guis.shape = createGui("Shape");
-    guis.shape.addObject(p.shape);
-    guis.shape.prototype.saveInLocalStorage("shape");
+    guis = mkgui(p);
+    els = mkdom();
 
-
-    guis.grid = createGui("Grid");
-    guis.grid.addObject(p.grid);
-    guis.grid.prototype.saveInLocalStorage("grid");
-
-    guis.dir = createGui("Direction");
-    guis.dir.addObject(p.dir);
-    guis.dir.prototype.saveInLocalStorage("dir");
-
-    buttons.push(createButton("export"))
-    buttons[0].position(20, windowHeight - 40)
-    buttons[0].mousePressed(descargar);
-
-    buttons.push(createButton("save"))
-    buttons[1].position(80, windowHeight - 40)
-    buttons[1].mousePressed(misaveJSON);
-
-    loadSelect = createSelect();
-    loadSelect.position(130, windowHeight - 40)
-
-    loadSelect.option("load")
-    loadSavesSelect()
-    loadSelect.changed(loadSave)
-
-    placeGuis();
+    placeguis(guis);
+    placedom(els);
     noLoop();
 
     // Object.values(guis).forEach((gui) => gui.hide())
@@ -147,7 +108,7 @@ function draw() {
     strokeWeight(p.shape.weight);
     fill(255);
     points = rings();
-    drawPoints(points)
+    points.forEach((point) => point.draw())
 }
 
 class Stick {
@@ -166,62 +127,7 @@ class Stick {
     }
 }
 
-function misaveJSON() {
-    let result = {};
-    for (const [name, gui] of Object.entries(guis)) {
-        result[name] = gui.prototype.getValuesAsJSON()
-        result.version = VERSION;
-    }
-    let oldSaves = localStorage.getItem("saves");
-    let saves;
 
-    if (!oldSaves) {
-        saves = [result]
-    }
-    else {
-        saves = JSON.parse(oldSaves)
-        let alreadySaved = false;
-        saves.forEach((save) => {
-            if (JSON.stringify(save) == JSON.stringify(result)) alreadySaved = true;
-        })
-        if (!alreadySaved) {
-            saves.push(result);
-            loadSelect.option(saves.length)
-        }
-    }
-    localStorage.setItem("saves", JSON.stringify(saves));
-}
-
-function loadSavesSelect() {
-    let saves = localStorage.getItem("saves");
-    if (!saves) return;
-    saves = JSON.parse(saves)
-    for (let i = 1; i <= saves.length; i++) {
-        loadSelect.option(`${i}`)
-    }
-}
-
-function loadSave() {
-    const i = parseInt(loadSelect.selected())
-    if (i == NaN) return;
-    let saves = localStorage.getItem("saves");
-    if (!saves) return;
-    saves = JSON.parse(saves)
-    console.log(saves[i - 1])
-    Object.keys(p).forEach((key) => {
-        guis[key].prototype.setValuesFromJSON(saves[i - 1][key])
-    })
-    draw()
-}
-
-function descargar() {
-    var time = new Date();
-    time = Math.floor(time / 1000) - 1612303066;
-    const el = document.querySelector(".p5Canvas > svg")
-    console.log(el)
-    // svgExport.downloadSvg(el, "eki" + time);
-    save(`eki${time}.svg`);
-}
 
 function ring(diameter, number, iter) {
     let sticks = [];
@@ -284,32 +190,17 @@ function rings() {
     return sticks;
 }
 
-function drawPoints(points) {
-    points.forEach((point) => point.draw())
-}
-
-function placeGuis() {
-    guis.shape.setPosition(20, 20);
-    guis.grid.setPosition(240, 20);
-    guis.dir.setPosition(windowWidth - 220, 20);
-}
 
 function keyPressed() {
     switch (key) {
         case 'h':
         case ' ':
-            Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
-            showButtons = !showButtons;
-            buttons.forEach((button) => {
-                if (showButtons) {
-                    button.show()
-                    loadSelect.show()
-                }
-                else {
-                    button.hide()
-                    loadSelect.hide()
-                }
+            showdom = !showdom;
+            Object.values(els).forEach((el) => {
+                if (showdom) { el.show() }
+                else { el.hide() }
             })
+            Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
             draw();
             break;
     }
@@ -317,6 +208,111 @@ function keyPressed() {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
-    placeGuis();
+    placeguis(guis);
+    placedom(els);
 }
 
+function mkgui(params) {
+    let guis = {};
+
+    guis.shape = createGui("Shape");
+    guis.shape.addObject(params.shape);
+    guis.shape.prototype.saveInLocalStorage("shape");
+
+
+    guis.grid = createGui("Grid");
+    guis.grid.addObject(params.grid);
+    guis.grid.prototype.saveInLocalStorage("grid");
+
+    guis.dir = createGui("Direction");
+    guis.dir.addObject(params.dir);
+    guis.dir.prototype.saveInLocalStorage("dir");
+
+    return guis
+}
+
+function mkdom() {
+    let els = {};
+
+    els.exportButton = createButton("export")
+    els.exportButton.mousePressed(downloadCSV);
+
+    els.saveButton = createButton("save")
+    els.saveButton.mousePressed(misaveJSON);
+
+    els.loadSelect = createSelect();
+    els.loadSelect.changed(loadSave);
+
+    // load select options
+    els.loadSelect.option("load")
+
+    let saves = localStorage.getItem("saves");
+    if (saves) {
+        saves = JSON.parse(saves)
+        for (let i = 1; i <= saves.length; i++) {
+            els.loadSelect.option(`${i}`)
+        }
+    }
+
+    return els
+}
+
+function placeguis(guis) {
+    guis.shape.setPosition(20, 20);
+    guis.grid.setPosition(240, 20);
+    guis.dir.setPosition(windowWidth - 220, 20);
+}
+
+function placedom(els) {
+    els.exportButton.position(20, windowHeight - 40)
+    els.saveButton.position(80, windowHeight - 40)
+    els.loadSelect.position(130, windowHeight - 40)
+}
+
+function misaveJSON() {
+    let result = {};
+    for (const [name, gui] of Object.entries(guis)) {
+        result[name] = gui.prototype.getValuesAsJSON()
+        result.version = VERSION;
+    }
+    let oldSaves = localStorage.getItem("saves");
+    let saves;
+
+    if (!oldSaves) {
+        saves = [result]
+    }
+    else {
+        saves = JSON.parse(oldSaves)
+        let alreadySaved = false;
+        saves.forEach((save) => {
+            if (JSON.stringify(save) == JSON.stringify(result)) alreadySaved = true;
+        })
+        if (!alreadySaved) {
+            saves.push(result);
+            els.loadSelect.option(saves.length)
+        }
+    }
+    localStorage.setItem("saves", JSON.stringify(saves));
+}
+
+function loadSave() {
+    const i = parseInt(els.loadSelect.selected())
+    if (i == NaN) return;
+    let saves = localStorage.getItem("saves");
+    if (!saves) return;
+    saves = JSON.parse(saves)
+    console.log(saves[i - 1])
+    Object.keys(p).forEach((key) => {
+        guis[key].prototype.setValuesFromJSON(saves[i - 1][key])
+    })
+    draw()
+}
+
+function downloadCSV() {
+    var time = new Date();
+    time = Math.floor(time / 1000) - 1612303066;
+    const el = document.querySelector(".p5Canvas > svg")
+    console.log(el)
+    // svgExport.downloadSvg(el, "eki" + time);
+    save(`eki${time}.svg`);
+}
