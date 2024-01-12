@@ -74,7 +74,7 @@ let p = {
 }
 
 let guis, exportButton;
-let exportButtonShow = true;
+let showInterface = true;
 
 let points;
 
@@ -86,10 +86,9 @@ function setup() {
     exportButton = createButton("⇩ SVG")
     exportButton.mousePressed(downloadCSV);
     placeguis(guis);
-    placeExportButton();
     urlLoad()
     noLoop();
-    toggleInterface()
+    // toggleInterface()
 }
 
 function draw() {
@@ -178,9 +177,14 @@ function rings() {
 }
 
 function toggleInterface() {
-    exportButtonShow = !exportButtonShow;
-    exportButtonShow ? exportButton.show() : exportButton.hide();
-    Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
+    showInterface = !showInterface;
+    if (showInterface) {
+        exportButton.show()
+        Object.values(guis).forEach((gui) => gui.prototype.show())
+    } else {
+        exportButton.hide()
+        Object.values(guis).forEach((gui) => gui.prototype.hide())
+    }
     draw();
 }
 
@@ -196,7 +200,6 @@ function keyPressed() {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     placeguis(guis);
-    placeExportButton();
 }
 
 function mkgui(params) {
@@ -275,7 +278,6 @@ function decodeState(data) {
 }
 
 function urlLoad() {
-
     let params = window.location.hash.slice(1)
     try {
         const state = decodeState(params)
@@ -285,7 +287,6 @@ function urlLoad() {
     } catch (err) {
         window.location.hash = "";
     }
-
 }
 
 function urlUpdate() {
@@ -295,13 +296,9 @@ function urlUpdate() {
 function placeguis(guis) {
     guis.shape.setPosition(20, 20);
     guis.grid.setPosition(240, 20);
-    guis.dir.setPosition(windowWidth - 220, 20);
+    guis.dir.setPosition(20, 220);
+    exportButton.position(20, 320)
 }
-
-function placeExportButton() {
-    exportButton.position(20, windowHeight - 40)
-}
-
 
 function downloadCSV() {
     var time = new Date();
