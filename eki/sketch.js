@@ -1,5 +1,4 @@
 const VERSION = 1;
-let t = 0;
 
 let p = {
 
@@ -23,12 +22,12 @@ let p = {
         itersMin: 1,
         itersMax: 60,
 
-        d0: 0,
+        d0: 40,
         d0Min: -100,
         d0Max: 400,
         d0Step: .1,
 
-        dS: 100,
+        dS: 30,
         dSMin: 1,
         dSMax: 250,
         dSStep: 1,
@@ -40,13 +39,13 @@ let p = {
 
         dFormula: ["A", "B", "C"],
 
-        n0: 15,
+        n0: 10,
         n0Min: 3,
         n0Max: 100,
 
         nI: 5,
-        nIMin: -30,
-        nIMax: 30,
+        nIMin: -20,
+        nIMax: 60,
 
         nS: .1,
         nSMin: .1,
@@ -55,35 +54,27 @@ let p = {
 
         nFormula: ["A", "B", "C"],
 
-        nm: ["A: nI", "B: n", "C: (n + nI) / 2"],
+        nm: ["A: n", "B: nI", "C: (n + nI) / 2"],
 
-        angleIncrement: 360 / ((1 + Math.sqrt(5)) / 2),
-        angleIncrementMax: 360,
-        angleIncrementStep: .1,
+        angleI: 0,
+        angleIMax: 360,
+        angleIStep: .1,
 
-        angleIncrementB: 0,
-        angleIncrementBMin: -5,
-        angleIncrementBMax: 5,
-        angleIncrementBStep: .01,
+        angleI2: 0,
+        angleI2Min: -5,
+        angleI2Max: 5,
+        angleI2Step: .01,
     },
 
     dir: {
         angleDeltaI: 0,
         angleDeltaIMax: 30,
         angleDeltaIStep: .01,
-
-        angleDeltaNoiseS: 0,
-        angleDeltaNoiseSMax: 1,
-        angleDeltaNoiseSStep: .01,
-
-        angleDeltaNoiseL: 0,
-        angleDeltaNoiseLMax: 1,
-        angleDeltaNoiseLStep: .01,
     },
 }
 
-let guis, els;
-let showdom = true;
+let guis, exportButton;
+let exportButtonShow = true;
 
 let points;
 
@@ -91,24 +82,23 @@ function setup() {
     createCanvas(windowWidth, windowHeight, SVG);
     // createCanvas(windowWidth, windowHeight);
     stroke(255);
-
     guis = mkgui(p);
-    els = mkdom();
-
+    exportButton = createButton("⇩ SVG")
+    exportButton.mousePressed(downloadCSV);
     placeguis(guis);
-    placedom(els);
+    placeExportButton();
+    // urlLoad()
     noLoop();
-
-    // Object.values(guis).forEach((gui) => gui.hide())
+    // toggleInterface()
 }
 
 function draw() {
-    t += p.shape.tD;
     background(0);
     strokeWeight(p.shape.weight);
     fill(255);
     points = rings();
     points.forEach((point) => point.draw())
+    urlUpdate()
 }
 
 class Stick {
@@ -127,26 +117,23 @@ class Stick {
     }
 }
 
-
-
 function ring(diameter, number, iter) {
     let sticks = [];
     let i = 0;
     let nMax;
     switch (p.grid.nm[0]) {
         case 'A':
-            nMax = p.grid.nI;
+            nMax = number;
             break;
         case 'B':
-            nMax = number;
+            nMax = p.grid.nI;
             break;
         case 'C':
             nMax = (p.grid.nI + number) / 2;
             break;
     }
     while (i < nMax) {
-        const angleIncrement = p.grid.angleIncrement + p.grid.angleIncrementB;
-        // const angle = iter * angleIncrement * PI / 180 + iter * i * TAU / number;
+        const angleIncrement = p.grid.angleI + p.grid.angleI2;
         const angle = iter * angleIncrement * PI / 180 + i * TAU / number;
         const pos = createVector(cos(angle), sin(angle))
         pos.setMag(diameter)
@@ -190,18 +177,18 @@ function rings() {
     return sticks;
 }
 
+function toggleInterface() {
+    exportButtonShow = !exportButtonShow;
+    exportButtonShow ? exportButton.show() : exportButton.hide();
+    Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
+    draw();
+}
 
 function keyPressed() {
     switch (key) {
         case 'h':
         case ' ':
-            showdom = !showdom;
-            Object.values(els).forEach((el) => {
-                if (showdom) { el.show() }
-                else { el.hide() }
-            })
-            Object.values(guis).forEach((gui) => gui.prototype.toggleVisibility())
-            draw();
+            toggleInterface();
             break;
     }
 }
@@ -209,52 +196,100 @@ function keyPressed() {
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     placeguis(guis);
-    placedom(els);
+    placeExportButton();
 }
 
 function mkgui(params) {
     let guis = {};
 
     guis.shape = createGui("Shape");
-    guis.shape.addObject(params.shape);
-    guis.shape.prototype.saveInLocalStorage("shape");
-
-
     guis.grid = createGui("Grid");
-    guis.grid.addObject(params.grid);
-    guis.grid.prototype.saveInLocalStorage("grid");
-
     guis.dir = createGui("Direction");
+
+    guis.shape.addObject(params.shape);
+    guis.grid.addObject(params.grid);
     guis.dir.addObject(params.dir);
-    guis.dir.prototype.saveInLocalStorage("dir");
 
     return guis
 }
 
-function mkdom() {
-    let els = {};
+function compressState(state) {
+    return [
+        state.version,
+        state.shape.weight,
+        state.shape.length,
+        state.shape.scale,
+        state.grid.iters,
+        state.grid.d0,
+        state.grid.dS,
+        state.grid.dS2,
+        state.grid.dFormula,
+        state.grid.n0,
+        state.grid.nI,
+        state.grid.nS,
+        state.grid.nFormula,
+        state.grid.nm,
+        state.grid.angleI,
+        state.grid.angleI2,
+        state.dir.angleDeltaI,
+    ]
+}
 
-    els.exportButton = createButton("export")
-    els.exportButton.mousePressed(downloadCSV);
+function decompressState(data) {
+    return {
+        shape: {
+            weight: data[1],
+            length: data[2],
+            scale: data[3],
+        },
+        grid: {
+            iters: data[4],
+            d0: data[5],
+            dS: data[6],
+            dS2: data[7],
+            dFormula: data[8].index,
+            n0: data[9],
+            nI: data[10],
+            nS: data[11],
+            nFormula: data[12].index,
+            nm: data[13],
+            angleI: data[14],
+            angleI2: data[15],
+        },
+        dir: {
+            angleDeltaI: data[16]
+        },
+    }
+}
 
-    els.saveButton = createButton("save")
-    els.saveButton.mousePressed(misaveJSON);
+function encodeState() {
+    let state = { version: VERSION };
+    for (const [name, gui] of Object.entries(guis)) {
+        state[name] = gui.prototype.getValuesAsJSON()
+    }
+    return btoa(JSON.stringify(compressState(state)))
+}
 
-    els.loadSelect = createSelect();
-    els.loadSelect.changed(loadSave);
+function decodeState(data) {
+    return decompressState(JSON.parse(atob(data)))
+}
 
-    // load select options
-    els.loadSelect.option("load")
+function urlLoad() {
 
-    let saves = localStorage.getItem("saves");
-    if (saves) {
-        saves = JSON.parse(saves)
-        for (let i = 1; i <= saves.length; i++) {
-            els.loadSelect.option(`${i}`)
-        }
+    let params = window.location.hash.slice(1)
+    try {
+        const state = decodeState(params)
+        Object.keys(guis).forEach((key) => {
+            guis[key].prototype.setValuesFromJSON(state[key])
+        })
+    } catch (err) {
+        window.location.hash = "";
     }
 
-    return els
+}
+
+function urlUpdate() {
+    window.location.hash = encodeState()
 }
 
 function placeguis(guis) {
@@ -263,56 +298,13 @@ function placeguis(guis) {
     guis.dir.setPosition(windowWidth - 220, 20);
 }
 
-function placedom(els) {
-    els.exportButton.position(20, windowHeight - 40)
-    els.saveButton.position(80, windowHeight - 40)
-    els.loadSelect.position(130, windowHeight - 40)
+function placeExportButton() {
+    exportButton.position(20, windowHeight - 40)
 }
 
-function misaveJSON() {
-    let result = {};
-    for (const [name, gui] of Object.entries(guis)) {
-        result[name] = gui.prototype.getValuesAsJSON()
-        result.version = VERSION;
-    }
-    let oldSaves = localStorage.getItem("saves");
-    let saves;
-
-    if (!oldSaves) {
-        saves = [result]
-    }
-    else {
-        saves = JSON.parse(oldSaves)
-        let alreadySaved = false;
-        saves.forEach((save) => {
-            if (JSON.stringify(save) == JSON.stringify(result)) alreadySaved = true;
-        })
-        if (!alreadySaved) {
-            saves.push(result);
-            els.loadSelect.option(saves.length)
-        }
-    }
-    localStorage.setItem("saves", JSON.stringify(saves));
-}
-
-function loadSave() {
-    const i = parseInt(els.loadSelect.selected())
-    if (i == NaN) return;
-    let saves = localStorage.getItem("saves");
-    if (!saves) return;
-    saves = JSON.parse(saves)
-    console.log(saves[i - 1])
-    Object.keys(p).forEach((key) => {
-        guis[key].prototype.setValuesFromJSON(saves[i - 1][key])
-    })
-    draw()
-}
 
 function downloadCSV() {
     var time = new Date();
     time = Math.floor(time / 1000) - 1612303066;
-    const el = document.querySelector(".p5Canvas > svg")
-    console.log(el)
-    // svgExport.downloadSvg(el, "eki" + time);
     save(`eki${time}.svg`);
 }
