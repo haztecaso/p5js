@@ -87,9 +87,9 @@ function setup() {
     exportButton.mousePressed(downloadCSV);
     placeguis(guis);
     placeExportButton();
-    // urlLoad()
+    urlLoad()
     noLoop();
-    // toggleInterface()
+    toggleInterface()
 }
 
 function draw() {
